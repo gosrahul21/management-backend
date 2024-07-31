@@ -32,7 +32,6 @@ export class UserService {
     await this.userModel.findByIdAndDelete(id).exec();
   }
 
-  
   async getUserFromGoogleId(googleId: string) {
     try {
       const user = await this.userModel.findOne({ googleId }).lean();
@@ -110,10 +109,30 @@ export class UserService {
         },
       );
       // throwErrorMessage(error);
-      throw new Error("Error in user login")
+      throw new Error('Error in user login');
     }
   }
 
+  async signInWithEmailAndPassword(email: string, password: string) {
+    const user = await this.userModel.findOne({ email });
+    if (password === user.password) {
+      const { jwtToken, refreshToken } = this.generateAuthToken(
+        {
+          googleId: user.googleId,
+          userId: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          image: user.image,
+        },
+        process.env.SECRET_KEY,
+      );
+      return {
+        jwtToken,
+        refreshToken,
+      };
+    }
+  }
 
   async createUser(userData: User): Promise<any> {
     try {
@@ -138,7 +157,7 @@ export class UserService {
         //     userId: userData._id,
         //   },
         // );
-        throw new Error(('user.USER_EXISTS'));
+        throw new Error('user.USER_EXISTS');
       }
     } catch (error) {
       // createErrorLog(
@@ -167,9 +186,7 @@ export class UserService {
         //     userId,
         //   },
         // );
-        throw new NotFoundException(
-          'user.USER_NOT_AVAILABLE',
-        );
+        throw new NotFoundException('user.USER_NOT_AVAILABLE');
       }
       return user;
     } catch (error) {
@@ -185,7 +202,6 @@ export class UserService {
     }
   }
 
-  
   generateAuthToken(payload: any, secretKey: string) {
     const jwtToken = this.jwtService.sign(payload, {
       secret: secretKey,
