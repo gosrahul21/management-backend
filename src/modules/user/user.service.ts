@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
 import { User, UserDocument } from './user.entity';
@@ -132,6 +132,8 @@ export class UserService {
         refreshToken,
       };
     }
+    else 
+    throw new ForbiddenException("Wrong credentials")
   }
 
   async createUser(userData: User): Promise<any> {
