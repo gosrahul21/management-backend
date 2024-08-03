@@ -62,4 +62,9 @@ export class EmployeeService {
       throw new NotFoundException('Employee not found');
     }
   }
+
+  async getEmployeesCount(gymId: string){
+    const count = await this.employeeModel.findOne({gymId: new Types.ObjectId(gymId)}).countDocuments();
+    return count;
+  }
 }

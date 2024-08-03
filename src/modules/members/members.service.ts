@@ -5,11 +5,14 @@ import { Model, Types } from 'mongoose';
 import { Member, MemberDocument } from './entity/member.entity';
 import { Subscription } from '../subscription/entity/subscription.entity';
 import { SubscriptionPlan } from '../subscription-plan/entity/subscription-plan.entity';
+import { EmployeeService } from '../employee/services/employee.service';
 
 @Injectable()
 export class MemberService {
   constructor(
     @InjectModel(Member.name) private memberModel: Model<MemberDocument>,
+    private readonly employeeService: EmployeeService,
+
   ) {}
 
   async addMember(userId: string, gymId: string): Promise<Member> {
@@ -95,6 +98,7 @@ export class MemberService {
       inactiveClients,
       newClients,
       membershipExpiring,
+      totalEmployees: await this.employeeService.getEmployeesCount(gymId)
     };
   }
 

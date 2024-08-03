@@ -4,6 +4,7 @@ import { Document, Types } from 'mongoose';
 import { Group } from 'src/modules/group/entities/group.entity';
 import { Member } from 'src/modules/members/entity/member.entity';
 import { SubscriptionPlan } from 'src/modules/subscription-plan/entity/subscription-plan.entity';
+import { SubscriptionStatus } from 'src/types/susbcription-status.enum';
 
 @Schema({ timestamps: true })
 export class Subscription extends Document {
@@ -24,6 +25,13 @@ export class Subscription extends Document {
 
     @Prop({ required: true })
     startDate: Date; // Start date of the subscription
+
+    @Prop({
+        type: String,
+        default: SubscriptionStatus.ACTIVE,
+        enum: SubscriptionStatus,
+    })
+    status: SubscriptionStatus;
 
     createdAt?: Date;
 

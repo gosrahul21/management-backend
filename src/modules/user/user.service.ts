@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
 import { User, UserDocument } from './user.entity';
@@ -131,9 +135,7 @@ export class UserService {
         jwtToken,
         refreshToken,
       };
-    }
-    else 
-    throw new ForbiddenException("Wrong credentials")
+    } else throw new ForbiddenException('Wrong credentials');
   }
 
   async createUser(userData: User): Promise<any> {
@@ -171,6 +173,7 @@ export class UserService {
       //   },
       // );
       // throwErrorMessage(error);
+      console.log(error);
       throw new Error('create user error');
     }
   }
@@ -178,7 +181,7 @@ export class UserService {
   async updateUserById(userId: Types.ObjectId, updateQuery: UpdateQuery<User>) {
     try {
       const user = await this.userModel
-        .findByIdAndUpdate(userId, updateQuery)
+        .findByIdAndUpdate(userId, updateQuery, { new: true })
         .lean();
       if (!user) {
         // createErrorLog(

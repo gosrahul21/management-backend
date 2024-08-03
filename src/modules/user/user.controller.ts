@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   Req,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
@@ -20,6 +21,8 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { createInfoLog } from 'src/common/utils/logger';
 import { Types } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
+import { AuthGuard } from 'src/guard/user.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -48,6 +51,15 @@ export class UserController {
     return this.userService.remove(id);
   }
 
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  async updateUserDetails(@Param('id') userId: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.updateUserById(
+      new Types.ObjectId(userId),
+      updateUserDto,
+    );
+  }
+
   /**
    * This is api function used to login user if user exist else create new user
    * @param loginUserInput
@@ -65,6 +77,7 @@ export class UserController {
     const payload = await verifyToken(tokenDetails.id_token);
     const googleId = payload.sub;
     const { email, given_name, family_name, picture } = payload;
+    console.log(payload);
     let existingUser = await this.userService.getUserFromGoogleId(googleId);
     if (!existingUser) {
       existingUser = await this.userService.createUser({
