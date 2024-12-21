@@ -14,6 +14,7 @@ import { SubscriptionService } from '../service/subscription.service';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
 import { AuthGuard } from 'src/guard/user.guard';
 import { UpdateSubscriptionDto } from '../dto/update-subscription.dto';
+import { HoldSubscriptionDto } from '../dto/hold-subscription.dto';
 
 @Controller('subscriptions')
 export class SubscriptionController {
@@ -86,5 +87,15 @@ export class SubscriptionController {
     return {
       revenue,
     };
+  }
+
+  @Post(':id/hold')
+  @UseGuards(AuthGuard)
+  async holdSubscription(
+    @Body() { pauseDate, restartDate }: HoldSubscriptionDto,
+    @Param('id') id: string,
+  ) {
+    console.log({ pauseDate, restartDate });
+    return this.subscriptionService.holdSubscription(id, pauseDate, restartDate);
   }
 }
