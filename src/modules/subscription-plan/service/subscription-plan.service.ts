@@ -37,14 +37,47 @@ export class SubscriptionPlanService {
     return subscriptionPlan.toObject();
   }
 
-  async getSubscriptionPlansByGym(gymId: string): Promise<SubscriptionPlan[]> {
-    return this.subscriptionPlanModel.find({ gymId }).lean();
+  async getSubscriptionPlansByGym(gymId: string): Promise<any[]> {
+    return this.subscriptionPlanModel.aggregate([
+      {
+        $match: { gymId }, // Match plans by gymId
+      },
+      {
+        $lookup: {
+          from: 'subscriptions', // Join with subscriptions collection
+          localField: '_id', // Match subscriptionPlan's _id
+          foreignField: 'planId', // Subscription's planId
+          as: 'subscriptions', // Result array field
+        },
+      },
+      {
+        $addFields: {
+          totalMembers: {
+            $size: {
+              $filter: {
+                input: '$subscriptions',
+                as: 'subscription',
+                cond: { $eq: ['$$subscription.status', 'active'] }, // Filter active subscriptions
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          subscriptions: 0, // Exclude the subscriptions array from the output
+        },
+      },
+    ]);
   }
 
-  async getSubscriptionPlanById(planId: Types.ObjectId): Promise<SubscriptionPlan> {
+  async getSubscriptionPlanById(
+    planId: Types.ObjectId,
+  ): Promise<SubscriptionPlan> {
     const subscriptionPlan = await this.subscriptionPlanModel
       .findById(new Types.ObjectId(planId))
-      .populate('gymId').lean();
+      .populate('gymId')
+      .lean();
     if (!subscriptionPlan)
       throw new NotFoundException(`Plan with id ${planId} not found`);
     return subscriptionPlan;
@@ -60,7 +93,9 @@ export class SubscriptionPlanService {
       throw new NotFoundException('Subscription plan not found');
     }
 
-    const gym = await this.gymService.findOne(subscriptionPlan.gymId as Types.ObjectId);
+    const gym = await this.gymService.findOne(
+      subscriptionPlan.gymId as Types.ObjectId,
+    );
     if (!gym) {
       throw new NotFoundException('Gym not found');
     }

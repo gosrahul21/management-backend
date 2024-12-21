@@ -39,9 +39,40 @@ export class GroupService {
     return group.save();
   }
 
-  async getGroupsByGym(gymId: string): Promise<Group[]> {
-    return this.groupModel.find({ gymId }).lean();
+  async getGroupsByGym(gymId: string): Promise<any[]> {
+    return this.groupModel.aggregate([
+      {
+        $match: { gymId }, // Match groups for the given gymId
+      },
+      {
+        $lookup: {
+          from: 'subscriptions', // Subscription collection
+          localField: '_id', // Group's _id
+          foreignField: 'groupId', // Subscription's groupId
+          as: 'subscriptions', // Result array field
+        },
+      },
+      {
+        $addFields: {
+          totalMembers: {
+            $size: {
+              $filter: {
+                input: '$subscriptions',
+                as: 'subscription',
+                cond: { $eq: ['$$subscription.status', 'active'] }, // Only ACTIVE subscriptions
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          subscriptions: 0, // Remove the `subscriptions` field from the output
+        },
+      },
+    ]);
   }
+  
 
   async updateGroup(
     userId: string,

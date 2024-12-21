@@ -245,21 +245,27 @@ export class SubscriptionService {
   }
 
   validateAndMergeHoldPeriods(
-    existingHoldPeriods: { pauseDate: Date; restartDate?: Date }[],
+    startDate: Date,
+    // existingHoldPeriods: { pauseDate: Date; restartDate?: Date }[],
     newHoldPeriods: { pauseDate: Date; restartDate?: Date }[],
   ) {
-    const allPeriods = [...existingHoldPeriods, ...newHoldPeriods];
+    if (!newHoldPeriods || !newHoldPeriods.length) return [];
 
-    // Sort by pause date
-    allPeriods.sort(
+    newHoldPeriods.sort(
       (a, b) =>
         new Date(a.pauseDate).getTime() - new Date(b.pauseDate).getTime(),
     );
 
-    // Validate sequence
-    this.validatePauseRestartSequence(allPeriods);
+    if (new Date(startDate) > new Date(newHoldPeriods[0].pauseDate)) {
+      throw new BadRequestException(
+        'New start date cannot fall within a pause period.',
+      );
+    }
 
-    return allPeriods;
+    // Validate sequence
+    this.validatePauseRestartSequence(newHoldPeriods);
+
+    return newHoldPeriods;
   }
   validatePauseRestartSequence(
     holdDates: { pauseDate: Date; restartDate?: Date }[],
@@ -306,12 +312,12 @@ export class SubscriptionService {
     }
 
     const plan = subscription.planId as SubscriptionPlan;
-
-    if (!this.isAuthorized(userId, plan.gymId.toString())) {
-      throw new UnauthorizedException(
-        'You are not authorized to update this subscription',
-      );
-    }
+    // console.log(plan.gymId, userId)
+    // if (!this.isAuthorized(userId, plan.gymId.toString())) {
+    //   throw new UnauthorizedException(
+    //     'You are not authorized to update this subscription',
+    //   );
+    // }
 
     const updatedData: Partial<Subscription> = {};
 
@@ -327,7 +333,8 @@ export class SubscriptionService {
     // Update hold periods
     if (updateDto.holdDate) {
       updatedData.holdDate = this.validateAndMergeHoldPeriods(
-        subscription.holdDate || [],
+        // subscription.holdDate || [],
+        updatedData.startDate || subscription.startDate,
         updateDto.holdDate,
       );
     }
